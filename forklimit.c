@@ -1,11 +1,11 @@
-#define LIBC_NAME "libc.so.6"
-#define FORK_LIMIT 50
-
 #include <dlfcn.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/shm.h>
 #include <sys/types.h>
+
+#define LIBC_NAME "libc.so.6"
+#define FORK_LIMIT 50
 
 static void *libc_handle = NULL;
 static pid_t (*fork_ptr)(void);
