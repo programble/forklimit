@@ -1,8 +1,8 @@
 CC=gcc
-CFLAGS=-std=c99 -D_SVID_SOURCE
+CFLAGS=-std=c99 -Wall -Wextra -D_SVID_SOURCE -fPIC -ldl -shared
 
 forklimit.so: forklimit.c
-	$(CC) $(CFLAGS) $< -fPIC -shared -ldl -o $@
+	$(CC) $(CFLAGS) $< -o $@
 
 clean:
 	rm -f forklimit.so
