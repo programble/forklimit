@@ -5,12 +5,13 @@
 #include <sys/types.h>
 
 #define LIBC_NAME "libc.so.6"
-#define FORK_LIMIT 50
+#define DEFAULT_LIMIT 50
 
 static void *libc_handle = NULL;
 static pid_t (*fork_ptr)(void);
 
 static int *fork_count;
+static int fork_limit;
 
 static void init(void)
 {
@@ -44,6 +45,13 @@ static void init(void)
         exit(EXIT_FAILURE);
     }
     *fork_count = 0;
+
+    // Get the fork limit
+    char *env_limit = getenv("FORK_LIMIT");
+    if (env_limit)
+        fork_limit = atoi(env_limit);
+    if (!fork_limit)
+        fork_limit = DEFAULT_LIMIT;
 }
 
 // Replacement fork
@@ -56,7 +64,7 @@ pid_t fork(void)
     if (*fork_count == -1)
         exit(EXIT_FAILURE);
 
-    if (++*fork_count > FORK_LIMIT) {
+    if (++*fork_count > fork_limit) {
         *fork_count = -1;
         fprintf(stderr, "forklimit: fork limit exceeded\n");
         exit(EXIT_FAILURE);
