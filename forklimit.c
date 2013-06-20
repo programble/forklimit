@@ -8,7 +8,6 @@
 #define LIBC_NAME "libc.so.6"
 #define DEFAULT_LIMIT 50
 
-static void *libc_handle;
 static pid_t (*fork_ptr)(void);
 
 static int *fork_count;
@@ -17,7 +16,7 @@ static int fork_limit;
 static void __attribute__((constructor)) init(void)
 {
     // Get a pointer to the original fork function
-    libc_handle = dlopen(LIBC_NAME, RTLD_LAZY);
+    void *libc_handle = dlopen(LIBC_NAME, RTLD_LAZY);
     if (!libc_handle) {
         fprintf(stderr, OUT_PREFIX "cannot open libc: %s\n", dlerror());
         exit(EXIT_FAILURE);
