@@ -29,7 +29,6 @@ static inline void *get_func_ptr(void *handle, char *sym)
 
 static void __attribute__((constructor)) init(void)
 {
-    fprintf(stderr, OUT_PREFIX "init\n");
     // Get pointers to original functions
     void *handle = dlopen(LIBC_NAME, RTLD_LAZY);
     if (!handle) {
