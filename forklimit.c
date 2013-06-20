@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/shm.h>
+#include <sys/mman.h>
 #include <sys/types.h>
 
 #define OUT_PREFIX "forklimit: "
@@ -39,14 +39,9 @@ static void __attribute__((constructor)) init(void)
     execve_ptr = get_func_ptr(handle, "execve");
 
     // Get shared memory for fork counter
-    int shmid = shmget(IPC_PRIVATE, sizeof(int), 0644 | IPC_CREAT);
-    if (shmid == -1) {
-        perror(OUT_PREFIX "shmget");
-        exit(EXIT_FAILURE);
-    }
-    fork_count = shmat(shmid, NULL, 0);
-    if (fork_count == (void *)(-1)) {
-        perror(OUT_PREFIX "shmat");
+    fork_count = mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
+    if (fork_count == MAP_FAILED) {
+        perror(OUT_PREFIX "mmap");
         exit(EXIT_FAILURE);
     }
     *fork_count = 0;
