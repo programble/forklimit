@@ -6,7 +6,7 @@
 
 #define OUT_PREFIX "forklimit: "
 #define LIBC_NAME "libc.so.6"
-#define DEFAULT_LIMIT 50
+#define DEFAULT_LIMIT 100
 
 static pid_t (*fork_ptr)(void);
 
