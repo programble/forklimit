@@ -4,10 +4,11 @@
 #include <sys/shm.h>
 #include <sys/types.h>
 
+#define OUT_PREFIX "forklimit: "
 #define LIBC_NAME "libc.so.6"
 #define DEFAULT_LIMIT 50
 
-static void *libc_handle = NULL;
+static void *libc_handle;
 static pid_t (*fork_ptr)(void);
 
 static int *fork_count;
@@ -18,24 +19,24 @@ static void init(void)
     // Get a pointer to the original fork function
     libc_handle = dlopen(LIBC_NAME, RTLD_LAZY);
     if (!libc_handle) {
-        fprintf(stderr, "forklimit: cannot open libc: %s\n", dlerror());
+        fprintf(stderr, OUT_PREFIX "cannot open libc: %s\n", dlerror());
         exit(EXIT_FAILURE);
     }
     fork_ptr = dlsym(libc_handle, "fork");
     if (!fork_ptr) {
-        fprintf(stderr, "forklimit: cannot find function fork: %s\n", dlerror());
+        fprintf(stderr, OUT_PREFIX "cannot find function fork: %s\n", dlerror());
         exit(EXIT_FAILURE);
     }
 
     // Get shared memory for fork counter
     int shmid = shmget(IPC_PRIVATE, sizeof(int), 0644 | IPC_CREAT);
     if (shmid == -1) {
-        perror("forklimit: shmget");
+        perror(OUT_PREFIX "shmget");
         exit(EXIT_FAILURE);
     }
     fork_count = shmat(shmid, NULL, 0);
     if (fork_count == (void *)(-1)) {
-        perror("forklimit: shmat");
+        perror(OUT_PREFIX "shmat");
         exit(EXIT_FAILURE);
     }
     *fork_count = 0;
@@ -60,7 +61,7 @@ pid_t fork(void)
 
     if (++*fork_count > fork_limit) {
         *fork_count = -1;
-        fprintf(stderr, "forklimit: fork limit exceeded\n");
+        fprintf(stderr, OUT_PREFIX "fork limit exceeded\n");
         exit(EXIT_FAILURE);
     }
 
