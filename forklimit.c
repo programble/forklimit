@@ -4,8 +4,8 @@
 #include <dlfcn.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h>
 #include <sys/shm.h>
+#include <sys/types.h>
 
 static void *libc_handle = NULL;
 static pid_t (*fork_ptr)(void);
