@@ -9,7 +9,7 @@ detonate a fork bomb. The process will be killed if it attempts to fork
 more than the limit.
 
 The number of allowed forks before the process is killed can be changed
-using the `FORK_LIMIT` environment variable. The default is 50.
+using the `FORK_LIMIT` environment variable. The default is 100.
 
 ```bash
 $ make
