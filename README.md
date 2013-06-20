@@ -4,8 +4,6 @@ Preventing fork bombs since 2013.
 
 ## Usage
 
-**Warning**: `make` attempts to detonate a fork bomb. Run with caution.
-
 Set `LD_PRELOAD` to `forklimit.so` when running a process that may
 detonate a fork bomb. The process will be killed if it attempts to fork
 more than the limit.
