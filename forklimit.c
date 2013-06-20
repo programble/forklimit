@@ -28,13 +28,7 @@ static void init(void)
     }
 
     // Get shared memory for fork counter
-    char *filename = getenv("LD_PRELOAD");
-    key_t key = ftok(filename, 1337);
-    if (key == -1) {
-        perror(filename);
-        exit(EXIT_FAILURE);
-    }
-    int shmid = shmget(key, sizeof(int), 0644 | IPC_CREAT);
+    int shmid = shmget(IPC_PRIVATE, sizeof(int), 0644 | IPC_CREAT);
     if (shmid == -1) {
         perror("forklimit: shmget");
         exit(EXIT_FAILURE);
