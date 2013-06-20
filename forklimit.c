@@ -14,7 +14,7 @@ static pid_t (*fork_ptr)(void);
 static int *fork_count;
 static int fork_limit;
 
-static void init(void)
+static void __attribute__((constructor)) init(void)
 {
     // Get a pointer to the original fork function
     libc_handle = dlopen(LIBC_NAME, RTLD_LAZY);
@@ -52,9 +52,6 @@ static void init(void)
 // Replacement fork
 pid_t fork(void)
 {
-    if (!libc_handle)
-        init();
-
     // Fork limit has already been reached, exit silently
     if (*fork_count == -1)
         exit(EXIT_FAILURE);
