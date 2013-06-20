@@ -7,7 +7,11 @@ Preventing fork bombs since 2013.
 **Warning**: `make` attempts to detonate a fork bomb. Run with caution.
 
 Set `LD_PRELOAD` to `forklimit.so` when running a process that may
-detonate a fork bomb.
+detonate a fork bomb. The process will be killed if it attempts to fork
+more than the limit.
+
+The number of allowed forks before the process is killed can be changed
+using the `FORK_LIMIT` environment variable. The default is 50.
 
 ```bash
 $ make
