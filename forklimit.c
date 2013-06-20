@@ -1,6 +1,7 @@
 #include <dlfcn.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/shm.h>
 #include <sys/types.h>
 
@@ -9,23 +10,34 @@
 #define DEFAULT_LIMIT 100
 
 static pid_t (*fork_ptr)(void);
+static int (*execve_ptr)(const char *, char *const [], char *const []);
+
+static char *ld_preload;
 
 static int *fork_count;
 static int fork_limit;
 
+static inline void *get_func_ptr(void *handle, char *sym)
+{
+    void *ptr = dlsym(handle, sym);
+    if (!ptr) {
+        fprintf(stderr, OUT_PREFIX "cannot find function %s: %s\n", sym, dlerror());
+        exit(EXIT_FAILURE);
+    }
+    return ptr;
+}
+
 static void __attribute__((constructor)) init(void)
 {
-    // Get a pointer to the original fork function
-    void *libc_handle = dlopen(LIBC_NAME, RTLD_LAZY);
-    if (!libc_handle) {
+    fprintf(stderr, OUT_PREFIX "init\n");
+    // Get pointers to original functions
+    void *handle = dlopen(LIBC_NAME, RTLD_LAZY);
+    if (!handle) {
         fprintf(stderr, OUT_PREFIX "cannot open libc: %s\n", dlerror());
         exit(EXIT_FAILURE);
     }
-    fork_ptr = dlsym(libc_handle, "fork");
-    if (!fork_ptr) {
-        fprintf(stderr, OUT_PREFIX "cannot find function fork: %s\n", dlerror());
-        exit(EXIT_FAILURE);
-    }
+    fork_ptr = get_func_ptr(handle, "fork");
+    execve_ptr = get_func_ptr(handle, "execve");
 
     // Get shared memory for fork counter
     int shmid = shmget(IPC_PRIVATE, sizeof(int), 0644 | IPC_CREAT);
@@ -46,9 +58,13 @@ static void __attribute__((constructor)) init(void)
         fork_limit = atoi(env_limit);
     if (!fork_limit)
         fork_limit = DEFAULT_LIMIT;
+
+    // Save initial value of LD_PRELOAD
+    ld_preload = strdup(getenv("LD_PRELOAD"));
 }
 
-// Replacement fork
+// Replacement functions
+
 pid_t fork(void)
 {
     // Fork limit has already been reached, exit silently
@@ -62,4 +78,15 @@ pid_t fork(void)
     }
 
     return (*fork_ptr)();
+}
+
+int execve(const char *filename, char *const argv[], char *const envp[])
+{
+    // Succeed only if LD_PRELOAD hasn't changed
+    for (char *const *env = envp; *env; env++) {
+        if (!strncmp(*env, "LD_PRELOAD", 10) && !strcmp(*env + 11, ld_preload))
+            return (*execve_ptr)(filename, argv, envp);
+    }
+    fprintf(stderr, OUT_PREFIX "LD_PRELOAD changed\n");
+    exit(EXIT_FAILURE);
 }
